@@ -80,11 +80,11 @@ const startServer = async () => {
     global.startupLogs.push(`[SERVER] Listening on 0.0.0.0:${PORT}...`);
 
     httpServer.listen(PORT, "0.0.0.0", () => {
-      global.startupLogs.push(`[LIVE] Server is LIVE at https://gradewiseai.techmiresolutions.com`);
+      global.startupLogs.push(`[LIVE] Server is LIVE at https://gradeadmin.techmiresolutions.com`);
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
       console.log(`Frontend URL: ${process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com"}`);
-      console.log(`Health: https://gradewiseai.techmiresolutions.com/api/health`);
+      console.log(`Health: https://gradeadmin.techmiresolutions.com/api/health`);
     });
   } catch (error) {
     const msg = `[FATAL] STARTUP FAILED: ${error.message}`;
