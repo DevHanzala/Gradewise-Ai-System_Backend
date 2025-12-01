@@ -38,7 +38,8 @@ export const sendEmail = async (to, subject, htmlContent, textContent = null) =>
  * Send verification email
  */
 export const sendVerificationEmail = async (email, name, verificationToken) => {
-  const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+  const baseUrl = process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com";
+  const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
 
   const subject = "Verify Your Email - Gradewise AI";
   const htmlContent = `
@@ -94,7 +95,8 @@ export const sendVerificationEmail = async (email, name, verificationToken) => {
  * Send password reset email
  */
 export const sendPasswordResetEmail = async (email, name, resetToken) => {
-  const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+  const baseUrl = process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com";
+  const resetUrl = `${baseUrl}/reset-password/${resetToken}`;
 
   const subject = "Reset Your Password - Gradewise AI";
   const htmlContent = `
@@ -165,7 +167,8 @@ export const sendPasswordResetEmail = async (email, name, resetToken) => {
  * Send welcome email after verification
  */
 export const sendWelcomeEmail = async (email, name, role) => {
-  const dashboardUrl = `${process.env.FRONTEND_URL}/dashboard`;
+  const baseUrl = process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com";
+  const dashboardUrl = `${baseUrl}/dashboard`;
 
   const subject = "Welcome to Gradewise AI - Let's Get Started!";
   const htmlContent = `
@@ -265,7 +268,8 @@ export const sendRoleChangeEmail = async (email, name, oldRole, newRole) => {
     super_admin: "/super-admin/dashboard",
   };
   const dashboardPath = roleToDashboardPath[newRole] || "/profile";
-  const dashboardUrl = `${process.env.FRONTEND_URL}${dashboardPath}`;
+  const baseUrl = process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com";
+  const dashboardUrl = `${baseUrl}${dashboardPath}`;
 
   const subject = `Your Role Has Been Updated - Gradewise AI`;
   const htmlContent = `
@@ -324,7 +328,8 @@ export const sendRoleChangeEmail = async (email, name, oldRole, newRole) => {
  * Send assessment enrollment email to students
  */
 export const sendAssessmentEnrollmentEmail = async (email, name, assessmentTitle, dueDate) => {
-  const dashboardUrl = `${process.env.FRONTEND_URL}/student/dashboard`;
+  const baseUrl = process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com";
+  const dashboardUrl = `${baseUrl}/student/dashboard`;
 
   const subject = `New Assessment Available: ${assessmentTitle}`;
   const htmlContent = `
@@ -398,7 +403,8 @@ export const sendAssessmentEnrollmentEmail = async (email, name, assessmentTitle
  * Send assessment reminder email
  */
 export const sendAssessmentReminderEmail = async (email, name, assessmentTitle, dueDate, hoursRemaining) => {
-  const dashboardUrl = `${process.env.FRONTEND_URL}/dashboard`;
+  const baseUrl = process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com";
+  const dashboardUrl = `${baseUrl}/dashboard`;
 
   const subject = `⏰ Reminder: ${assessmentTitle} Due Soon`;
   const htmlContent = `

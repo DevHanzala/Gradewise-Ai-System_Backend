@@ -2,8 +2,6 @@ import db from "../DB/db.js";
 import { getCreationModel, getCheckingModel, mapLanguageCode, generateContent } from "../services/geminiService.js";
 import { generateAssessmentQuestions } from "../models/assessmentModel.js";
 import { PDFDocument, rgb } from "pdf-lib";
-import fs from "fs";
-import path from "path";
 
 const checkAnswer = (questionType, studentAnswer, correctAnswer) => {
   if (studentAnswer === undefined || studentAnswer === null) return false;

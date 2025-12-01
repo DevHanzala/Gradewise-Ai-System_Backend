@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import dotenv from "dotenv";
 import {
   createUser,
   createGoogleUser,
@@ -17,7 +18,6 @@ import {
   findUserByResetToken,
 } from "../models/userModel.js";
 import { sendVerificationEmail, sendPasswordResetEmail, sendRoleChangeEmail } from "../services/emailService.js";
-import dotenv from "dotenv";
 
 dotenv.config();
 

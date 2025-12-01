@@ -141,7 +141,7 @@ app.get("/api/logs", (req, res) => {
     success: true,
     data: {
       timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || "development",
+      environment: process.env.NODE_ENV || "production",
       port: PORT,
       frontendUrl: process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com",
       geminiKeyLoaded: !!process.env.GEMINI_CREATION_API_KEY,
