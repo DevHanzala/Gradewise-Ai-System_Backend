@@ -33,7 +33,7 @@ const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com",
+    origin: process.env.FRONTEND_URL || "https://gradewise-ai-system-frontend.vercel.app",
     credentials: true,
   },
 });
@@ -62,7 +62,7 @@ const startServer = async () => {
   try {
     global.startupLogs.push(`[INIT] Starting server on port ${PORT}...`);
     global.startupLogs.push(`[ENV] NODE_ENV = ${process.env.NODE_ENV || "development"}`);
-    global.startupLogs.push(`[ENV] FRONTEND_URL = ${process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com"}`);
+    global.startupLogs.push(`[ENV] FRONTEND_URL = ${process.env.FRONTEND_URL || "https://gradewise-ai-system-frontend.vercel.app"}`);
 
     global.startupLogs.push("[DB] Connecting to database...");
     await connectDB();
@@ -83,7 +83,7 @@ const startServer = async () => {
       global.startupLogs.push(`[LIVE] Server is LIVE at https://gradeadmin.techmiresolutions.com`);
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
-      console.log(`Frontend URL: ${process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com"}`);
+      console.log(`Frontend URL: ${process.env.FRONTEND_URL || "https://gradewise-ai-system-frontend.vercel.app"}`);
       console.log(`Health: https://gradeadmin.techmiresolutions.com/api/health`);
     });
   } catch (error) {
@@ -102,7 +102,7 @@ const startServer = async () => {
 // === MIDDLEWARE ===
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com",
+    origin: process.env.FRONTEND_URL || "https://gradewise-ai-system-frontend.vercel.app",
     credentials: true,
   })
 );
@@ -143,7 +143,7 @@ app.get("/api/logs", (req, res) => {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || "production",
       port: PORT,
-      frontendUrl: process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com",
+      frontendUrl: process.env.FRONTEND_URL || "https://gradewise-ai-system-frontend.vercel.app",
       geminiKeyLoaded: !!process.env.GEMINI_CREATION_API_KEY,
       dbConnected: global.dbConnected,
       uptime: `${process.uptime().toFixed(2)} seconds`,
