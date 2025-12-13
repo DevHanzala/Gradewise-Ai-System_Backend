@@ -26,7 +26,6 @@ export const sendEmail = async (to, subject, htmlContent, textContent = null) =>
     };
 
     const result = await transporter.sendMail(mailOptions);
-    console.log(`Email sent successfully to ${to}:`, result.messageId);
     return { success: true, messageId: result.messageId };
   } catch (error) {
     console.error(`Failed to send email to ${to}:`, error);
@@ -481,7 +480,6 @@ export const sendAssessmentReminderEmail = async (email, name, assessmentTitle, 
 export const testEmailConfiguration = async () => {
   try {
     await transporter.verify();
-    console.log("Email configuration is valid");
     return { success: true, message: "Email configuration is valid" };
   } catch (error) {
     console.error("Email configuration error:", error);

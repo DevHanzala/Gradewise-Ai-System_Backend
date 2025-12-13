@@ -11,18 +11,14 @@ dotenv.config()
 const createSuperAdmin = async () => {
   let client;
   try {
-    console.log("🔄 Starting Super Admin creation...");
 
     // Connect to the database
     client = await pool.connect();
-    console.log("✅ Connected to PostgreSQL database");
 
     // Start a transaction
     await client.query("BEGIN");
-    console.log("🔄 Started database transaction");
 
     // Ensure users table exists
-    console.log("🔄 Ensuring 'users' table exists...");
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -40,21 +36,12 @@ const createSuperAdmin = async () => {
         updated_at TIMESTAMP DEFAULT NOW()
       );
     `);
-    console.log("✅ 'users' table ensured");
 
     // Check if Super Admin already exists
-    console.log("🔄 Checking for existing Super Admin...");
     const existingQuery = "SELECT * FROM users WHERE role = 'super_admin'";
     const { rows: existing } = await client.query(existingQuery);
 
     if (existing.length > 0) {
-      console.log("❌ Super Admin already exists!");
-      console.log("Existing Super Admin:", {
-        id: existing[0].id,
-        name: existing[0].name,
-        email: existing[0].email,
-        role: existing[0].role,
-      });
       await client.query("ROLLBACK");
       client.release();
       process.exit(1);
@@ -72,7 +59,6 @@ const createSuperAdmin = async () => {
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(superAdminData.password, 10);
-    console.log("✅ Password hashed successfully");
 
     // Insert Super Admin into database
     const insertQuery = `
@@ -90,24 +76,12 @@ const createSuperAdmin = async () => {
 
     // Commit the transaction
     await client.query("COMMIT");
-    console.log("✅ Transaction committed");
 
     const newSuperAdmin = rows[0];
 
     console.log("✅ Super Admin created successfully!");
-    console.log("Super Admin Details:", {
-      id: newSuperAdmin.id,
-      name: newSuperAdmin.name,
-      email: newSuperAdmin.email,
-      role: newSuperAdmin.role,
-      verified: newSuperAdmin.verified,
-      created_at: newSuperAdmin.created_at,
-    });
+   
 
-    console.log("\n🔐 Login Credentials:");
-    console.log(`Email: ${superAdminData.email}`);
-    console.log(`Password: ${superAdminData.password}`);
-    console.log("\n⚠️ IMPORTANT: Change these credentials after first login!");
 
     client.release();
     process.exit(0);

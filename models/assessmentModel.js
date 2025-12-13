@@ -13,7 +13,6 @@ const ensureAssessmentsTable = async () => {
     `);
 
     if (!tableCheck.rows[0].exists) {
-      console.log("Creating assessments table...");
       await db.query(`
         CREATE TABLE assessments (
           id SERIAL PRIMARY KEY,
@@ -28,7 +27,6 @@ const ensureAssessmentsTable = async () => {
         )
       `);
       await db.query(`CREATE INDEX idx_assessments_instructor_id ON assessments(instructor_id);`);
-      console.log("assessments table created");
     } else {
       // Only make changes if needed — NEVER force NOT NULL again
       const columnInfo = await db.query(`
@@ -38,13 +36,11 @@ const ensureAssessmentsTable = async () => {
       `);
 
       if (columnInfo.rows[0]?.is_nullable === 'NO') {
-        console.log("Making prompt column nullable...");
         await db.query(`ALTER TABLE assessments ALTER COLUMN prompt DROP NOT NULL;`);
       }
 
       // Title should be nullable
       await db.query(`ALTER TABLE assessments ALTER COLUMN title DROP NOT NULL;`);
-      console.log("assessments table schema is up to date");
     }
   } catch (error) {
     console.error("Error ensuring assessments table:", error);
@@ -62,7 +58,6 @@ const ensureQuestionBlocksTable = async () => {
       )
     `);
     if (!tableCheck.rows[0].exists) {
-      console.log("Creating question_blocks table...");
       await db.query(`
         CREATE TABLE question_blocks (
           id SERIAL PRIMARY KEY,
@@ -80,9 +75,7 @@ const ensureQuestionBlocksTable = async () => {
       await db.query(`
         CREATE INDEX idx_question_blocks_assessment_id ON question_blocks(assessment_id);
       `);
-      console.log("✅ question_blocks table created");
     } else {
-      console.log("Checking for missing columns or type updates in question_blocks table...");
       await db.query(`
         DO $$ 
         BEGIN
@@ -102,7 +95,6 @@ const ensureQuestionBlocksTable = async () => {
         END;
         $$;
       `);
-      console.log("✅ question_blocks table updated with new columns and types");
     }
   } catch (error) {
     console.error("❌ Error creating/updating question_blocks table:", error);
@@ -120,7 +112,6 @@ const ensureAssessmentResourcesTable = async () => {
       )
     `);
     if (!tableCheck.rows[0].exists) {
-      console.log("Creating assessment_resources table...");
       await db.query(`
         CREATE TABLE assessment_resources (
           id SERIAL PRIMARY KEY,
@@ -133,7 +124,6 @@ const ensureAssessmentResourcesTable = async () => {
         CREATE INDEX idx_assessment_resources_assessment_id ON assessment_resources(assessment_id);
         CREATE INDEX idx_assessment_resources_resource_id ON assessment_resources(resource_id);
       `);
-      console.log("✅ assessment_resources table created");
     }
   } catch (error) {
     console.error("❌ Error creating assessment_resources table:", error);
@@ -151,7 +141,6 @@ const ensureEnrollmentsTable = async () => {
       )
     `);
     if (!tableCheck.rows[0].exists) {
-      console.log("Creating enrollments table...");
       await db.query(`
         CREATE TABLE enrollments (
           id SERIAL PRIMARY KEY,
@@ -165,7 +154,6 @@ const ensureEnrollmentsTable = async () => {
         CREATE INDEX idx_enrollments_assessment_id ON enrollments(assessment_id);
         CREATE INDEX idx_enrollments_student_id ON enrollments(student_id);
       `);
-      console.log("✅ enrollments table created");
     }
   } catch (error) {
     console.error("❌ Error creating enrollments table:", error);
@@ -183,7 +171,6 @@ const ensureResourceChunksTable = async () => {
       )
     `);
     if (!tableCheck.rows[0].exists) {
-      console.log("Creating resource_chunks table...");
       await db.query(`
         CREATE TABLE resource_chunks (
           id SERIAL PRIMARY KEY,
@@ -197,7 +184,6 @@ const ensureResourceChunksTable = async () => {
       await db.query(`
         CREATE INDEX idx_resource_chunks_resource_id ON resource_chunks(resource_id);
       `);
-      console.log("✅ resource_chunks table created");
     }
   } catch (error) {
     console.error("❌ Error creating resource_chunks table:", error);
@@ -215,7 +201,6 @@ const ensureGeneratedQuestionsTable = async () => {
       )
     `);
     if (!tableCheck.rows[0].exists) {
-      console.log("Creating generated_questions table...");
       await db.query(`
         CREATE TABLE generated_questions (
           id SERIAL PRIMARY KEY,
@@ -234,9 +219,7 @@ const ensureGeneratedQuestionsTable = async () => {
       await db.query(`
         CREATE INDEX idx_generated_questions_attempt_id ON generated_questions(attempt_id);
       `);
-      console.log("✅ generated_questions table created");
     } else {
-      console.log("Checking for missing columns or type updates in generated_questions table...");
       await db.query(`
         DO $$ 
         BEGIN
@@ -255,7 +238,6 @@ const ensureGeneratedQuestionsTable = async () => {
         END;
         $$;
       `);
-      console.log("✅ generated_questions table updated with new columns and types");
     }
   } catch (error) {
     console.error("❌ Error creating/updating generated_questions table:", error);
@@ -273,7 +255,6 @@ const ensureAssessmentAttemptsTable = async () => {
       )
     `);
     if (!tableCheck.rows[0].exists) {
-      console.log("Creating assessment_attempts table...");
       await db.query(`
         CREATE TABLE assessment_attempts (
           id SERIAL PRIMARY KEY,
@@ -291,9 +272,7 @@ const ensureAssessmentAttemptsTable = async () => {
         CREATE INDEX idx_assessment_attempts_student_id ON assessment_attempts(student_id);
         CREATE INDEX idx_assessment_attempts_assessment_id ON assessment_attempts(assessment_id);
       `);
-      console.log("✅ assessment_attempts table created");
     } else {
-      console.log("Checking for score column type update in assessment_attempts table...");
       await db.query(`
         DO $$ 
         BEGIN
@@ -306,7 +285,6 @@ const ensureAssessmentAttemptsTable = async () => {
         END;
         $$;
       `);
-      console.log("✅ assessment_attempts table updated with score as NUMERIC");
     }
   } catch (error) {
     console.error("❌ Error creating/updating assessment_attempts table:", error);
@@ -324,7 +302,6 @@ const ensureStudentAnswersTable = async () => {
       )
     `);
     if (!tableCheck.rows[0].exists) {
-      console.log("Creating student_answers table...");
       await db.query(`
         CREATE TABLE student_answers (
           id SERIAL PRIMARY KEY,
@@ -339,7 +316,6 @@ const ensureStudentAnswersTable = async () => {
         CREATE INDEX idx_student_answers_attempt_id ON student_answers(attempt_id);
         CREATE INDEX idx_student_answers_question_id ON student_answers(question_id);
       `);
-      console.log("✅ student_answers table created");
     } else {
       await db.query(`
         DO $$ 
@@ -356,7 +332,6 @@ const ensureStudentAnswersTable = async () => {
         END;
         $$;
       `);
-      console.log("✅ student_answers table updated with score column");
     }
   } catch (error) {
     console.error("❌ Error creating/updating student_answers table:", error);
@@ -374,7 +349,6 @@ const createAssessment = async (assessmentData) => {
   const validExternalLinks = Array.isArray(external_links) ? external_links.filter(link => link && typeof link === "string" && link.trim() !== "") : [];
   try {
     const { rows } = await db.query(query, [title || null, prompt, JSON.stringify(validExternalLinks), instructor_id, is_executed]);
-    console.log(`✅ Created assessment: ID=${rows[0].id}`);
     return rows[0];
   } catch (error) {
     console.error("❌ Error creating assessment:", error);
@@ -413,7 +387,6 @@ const storeQuestionBlocks = async (assessmentId, questionBlocks, instructorId) =
         ]
       );
     }
-    console.log(`✅ Stored ${questionBlocks.length} question blocks for assessment ${assessmentId}`);
   } catch (error) {
     console.error("❌ Error storing question blocks:", error);
     throw error;
@@ -570,9 +543,6 @@ const updateAssessment = async (assessmentId, updateData) => {
     ? external_links.filter(link => link && typeof link === "string" && link.trim() !== "") 
     : [];
 
-   console.log("MODEL RECEIVED updateData:", updateData); 
-  console.log("DEBUG: Model updateAssessment - Input updateData:", updateData);
-  console.log("DEBUG: Model updateAssessment - Title:", title, "Prompt:", prompt);
 
   try {
     const { rows } = await db.query(query, [
@@ -582,7 +552,6 @@ const updateAssessment = async (assessmentId, updateData) => {
       assessmentId
     ]);
     if (rows.length === 0) throw new Error("Assessment not found");
-    console.log(`DEBUG: Model updateAssessment - Updated row:`, rows[0]);
     return rows[0];
   } catch (error) {
     console.error("DEBUG: Model updateAssessment - Error:", error);
@@ -594,7 +563,6 @@ const deleteAssessment = async (assessmentId) => {
   try {
     const { rows } = await db.query("DELETE FROM assessments WHERE id = $1 RETURNING *", [assessmentId]);
     if (rows.length === 0) throw new Error("Assessment not found");
-    console.log(`✅ Deleted assessment: ID=${assessmentId}`);
   } catch (error) {
     console.error("❌ Error deleting assessment:", error);
     throw error;
@@ -614,7 +582,6 @@ const storeResourceChunk = async (resourceId, chunkText, embedding, metadata) =>
     `;
     const values = [resourceId, chunkText, embeddingString, metadata.chunk_index];
     const { rows } = await db.query(query, values);
-    console.log(`✅ Stored chunk for resource ${resourceId}, index ${metadata.chunk_index}`);
     return rows[0];
   } catch (error) {
     console.error("❌ Error storing resource chunk:", error);
@@ -658,7 +625,6 @@ const generateAssessmentQuestions = async (assessmentId, attemptId, language, as
       generationConfig: { maxOutputTokens: 4000, temperature: 0.7 },
     });
     const text = response.text || (response.candidates && response.candidates[0]?.content?.parts?.[0]?.text) || "";
-    console.log(`📝 Raw Gemini response (first 500 chars):`, text.substring(0, 500));
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
       try {
@@ -716,7 +682,6 @@ const generateAssessmentQuestions = async (assessmentId, attemptId, language, as
   }
 
   if (!Array.isArray(questions) || questions.length === 0) {
-    console.log(`🔄 Falling back to instructor-defined question structure for ${numQuestions} questions`);
     questions = blockRows.flatMap(block => {
       const { question_type, question_count, duration_per_question, num_options, positive_marks, negative_marks } = block;
       return Array.from({ length: question_count }, (_, index) => ({
@@ -756,7 +721,6 @@ const generateAssessmentQuestions = async (assessmentId, attemptId, language, as
       ]
     );
   }
-  console.log(`✅ Generated and stored ${questions.length} questions for attempt ${attemptId}`);
   return { questions, duration: totalDuration };
 };
 
@@ -781,7 +745,6 @@ const enrollStudent = async (assessmentId, email) => {
       `,
       [assessmentId, student.id]
     );
-    console.log(`✅ Enrolled student ${student.id} in assessment ${assessmentId}`);
     return rows[0];
   } catch (error) {
     console.error("❌ Error enrolling student:", error);
@@ -796,7 +759,6 @@ const unenrollStudent = async (assessmentId, studentId) => {
       [assessmentId, studentId]
     );
     if (rows.length === 0) throw new Error("Enrollment not found");
-    console.log(`✅ Unenrolled student ${studentId} from assessment ${assessmentId}`);
     return rows[0];
   } catch (error) {
     console.error("❌ Error unenrolling student:", error);
@@ -815,7 +777,6 @@ const getEnrolledStudents = async (assessmentId) => {
       `,
       [assessmentId]
     );
-    console.log(`✅ Retrieved ${rows.length} enrolled students for assessment ${assessmentId}`);
     return rows;
   } catch (error) {
     console.error("❌ Error fetching enrolled students:", error);
@@ -837,7 +798,6 @@ const linkResourceToAssessment = async (assessmentId, resourceId) => {
       `,
       [assessmentId, resourceId]
     );
-    console.log(`✅ Linked resource ${resourceId} to assessment ${assessmentId}`);
     return rows[0];
   } catch (error) {
     console.error("❌ Error linking resource to assessment:", error);
@@ -852,7 +812,6 @@ const clearLinksForAssessment = async (assessmentId) => {
       [assessmentId]
     );
     if (rowCount === 0) throw new Error("Assessment not found");
-    console.log(`✅ Cleared external links for assessment ${assessmentId}`);
     return true;
   } catch (error) {
     console.error("❌ Error clearing links for assessment:", error);
@@ -869,7 +828,6 @@ const init = async () => {
     await ensureGeneratedQuestionsTable();
     await ensureAssessmentAttemptsTable();
     await ensureStudentAnswersTable();
-    console.log("✅ All assessment-related tables initialized");
   } catch (error) {
     console.error("❌ Error initializing assessment tables:", error);
     throw error;

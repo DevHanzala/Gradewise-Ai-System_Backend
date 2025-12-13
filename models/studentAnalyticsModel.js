@@ -13,7 +13,6 @@ import { getCreationModel, generateContent } from "../services/geminiService.js"
  */
 export const getStudentAnalytics = async (studentId) => {
   try {
-    console.log(`📊 Getting analytics for student ${studentId}`);
 
     const enrolledAssessments = await db.query(`
       SELECT 
@@ -465,8 +464,6 @@ export const getLearningRecommendations = async (studentId) => {
       };
     } catch (parseError) {
       console.error("❌ AI recommendation parsing error:", parseError);
-      console.log("Debug: Raw response text:", responseText);
-      console.log("Falling back to default recommendations");
       recommendations = {
         weak_areas: weakAreas.rows.map(area => ({
           topic: area.question_type || 'General',

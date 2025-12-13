@@ -13,7 +13,6 @@ export const protect = async (req, res, next) => {
     // Check for token in Authorization header
     if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
       token = req.headers.authorization.split(" ")[1];
-      console.log(`🔍 Verifying token for ${req.method} ${req.originalUrl}: ${token.slice(0, 10)}...`);
     }
 
     if (!token) {
@@ -23,7 +22,6 @@ export const protect = async (req, res, next) => {
 
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log(`✅ Token decoded for ${req.method} ${req.originalUrl}: id=${decoded.id}, email=${decoded.email}, role=${decoded.role}`);
 
     // Check for roles misuse in payload
     if (decoded.roles) {
@@ -58,7 +56,6 @@ export const protect = async (req, res, next) => {
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     const allowedRoles = Array.isArray(roles[0]) ? roles[0] : roles;
-    console.log(`🔍 Authorizing for ${req.method} ${req.originalUrl}: allowed=[${allowedRoles.join(', ')}], userRole=${req.user?.role || 'none'}`);
 
     if (req.user?.roles) {
       console.error(`❌ req.user contains 'roles' array: ${JSON.stringify(req.user.roles)}. Expected 'role' as string.`);
@@ -70,7 +67,6 @@ export const authorizeRoles = (...roles) => {
       return res.status(403).json({ success: false, message: "Access denied: Insufficient permissions" });
     }
 
-    console.log(`✅ Authorized for ${req.method} ${req.originalUrl}: role=${req.user.role}`);
     next();
   };
 };

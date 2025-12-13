@@ -6,6 +6,7 @@ import {
   getAssessmentAnalytics,
   getAssessmentQuestions as modelGetAssessmentQuestions
 } from "../models/studentAnalyticsModel.js";
+import { redis } from "../services/redis.js";
 
 export const getStudentOverview = async (req, res) => {
   try {
@@ -18,7 +19,6 @@ export const getStudentOverview = async (req, res) => {
       });
     }
 
-    console.log(`📊 Getting analytics overview for student ${studentId}`);
 
     const analytics = await getStudentAnalytics(studentId);
 
@@ -49,7 +49,6 @@ export const getStudentPerformance = async (req, res) => {
       });
     }
 
-    console.log(`📈 Getting performance data for student ${studentId} (${timeRange})`);
 
     const performance = await getPerformanceOverTime(studentId, timeRange);
 
@@ -82,7 +81,6 @@ export const getStudentRecommendations = async (req, res) => {
       });
     }
 
-    console.log(`🎯 Getting learning recommendations for student ${studentId}`);
 
     const recommendations = await getLearningRecommendations(studentId);
 
@@ -112,7 +110,23 @@ export const getStudentAssessments = async (req, res) => {
       });
     }
 
+    // REDIS CACHE KEY
+    const cacheKey = `student:assessments:list:${studentId}`;
+
+    // CHECK REDIS FIRST — INSTANT LOAD
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      return res.status(200).json({
+        success: true,
+        message: "Student assessments retrieved successfully",
+        data: cached
+      });
+    }
+
     const assessments = await getStudentAssessmentsList(studentId);
+
+    // CACHE FOR 10 MINUTES
+    await redis.set(cacheKey, assessments, { ex: 600 });
 
     res.status(200).json({
       success: true,
@@ -120,11 +134,10 @@ export const getStudentAssessments = async (req, res) => {
       data: assessments
     });
   } catch (error) {
-    console.error("❌ Get student assessments error:", error.stack || error.message);
+    console.error("Get student assessments error:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to retrieve assessments",
-      error: error.message
+      message: "Failed to retrieve assessments"
     });
   }
 };
@@ -199,7 +212,6 @@ export const getStudentReport = async (req, res) => {
       });
     }
 
-    console.log(`📋 Generating detailed report for student ${studentId}${assessmentId ? ` (assessment ${assessmentId})` : ''}`);
 
     let report;
     if (assessmentId) {

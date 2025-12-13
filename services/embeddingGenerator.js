@@ -57,7 +57,6 @@ export const generateEmbedding = async (text, options = {}) => {
       });
     }
 
-    console.log(`Generated embedding for chunk ${currentChunk}/${totalChunks} (file ${fileIndex})`);
     return Array.from(output.data);
   } catch (error) {
     console.error("Error generating embedding:", error);

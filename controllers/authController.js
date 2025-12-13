@@ -30,7 +30,6 @@ export const signup = async (req, res) => {
   const { name, email, password, captchaToken } = req.body;
 
   try {
-    console.log(`Starting signup process for: ${email} | CAPTCHA: ${captchaToken ? "PASSED" : "MISSING"}`);
 
     const existingUser = await findUserByEmail(email);
     if (existingUser) {
@@ -39,23 +38,14 @@ export const signup = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log(`Password hashed for: ${email}`);
 
     const verificationToken = crypto.randomBytes(32).toString("hex");
-    console.log(`Generated verification token for ${email}: ${verificationToken.slice(0, 10)}...`);
 
     const newUser = await createUser(name, email, hashedPassword, "student", verificationToken, "manual", null);
-    console.log(`User created:`, {
-      id: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-      verified: newUser.verified,
-      provider: newUser.provider,
-    });
+    
 
     try {
       await sendVerificationEmail(email, name, verificationToken);
-      console.log(`Verification email sent to ${email}`);
     } catch (emailError) {
       console.error("Failed to send verification email:", emailError);
       return res.status(201).json({
@@ -97,7 +87,6 @@ export const googleAuth = async (req, res) => {
   const { name, email, uid, captchaToken } = req.body;
 
   try {
-    console.log(`Starting Google auth for: ${email} | CAPTCHA: ${captchaToken ? "PASSED" : "MISSING"}`);
 
     let user = await findUserByEmail(email);
 
@@ -120,19 +109,10 @@ export const googleAuth = async (req, res) => {
         });
       }
 
-      console.log(`Creating new Google user: ${email}`);
       user = await createGoogleUser(name, email, uid, "student");
-      console.log(`Google user created:`, {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        provider: user.provider,
-        uid: user.uid,
-      });
     }
 
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "24h" });
-    console.log(`Generated token for Google auth: ${email}`);
 
     res.status(200).json({
       success: true,
@@ -160,7 +140,6 @@ export const login = async (req, res) => {
   const { email, password, captchaToken } = req.body;
 
   try {
-    console.log(`Login attempt for: ${email} | CAPTCHA: ${captchaToken ? "PASSED" : "MISSING"}`);
 
     const user = await findUserByEmail(email);
     if (!user) {
@@ -168,7 +147,6 @@ export const login = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid credentials." });
     }
 
-    console.log(`User found: ${email}, verified: ${user.verified}, provider: ${user.provider}`);
 
     if (user.provider === "google") {
       console.warn(`Google account detected: ${email}`);
@@ -187,7 +165,6 @@ export const login = async (req, res) => {
     }
 
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "24h" });
-    console.log(`Generated token for login: ${email}`);
 
     res.status(200).json({
       success: true,
@@ -213,7 +190,6 @@ export const login = async (req, res) => {
  */
 export const verifyEmail = async (req, res) => {
   const { token } = req.params;
-  console.log(`Attempting to verify token: ${token.slice(0, 10)}...`);
 
   try {
     const user = await findUserByVerificationToken(token);
@@ -236,7 +212,6 @@ export const verifyEmail = async (req, res) => {
       } else {
         const verifiedUser = await verifyUser(token);
         if (verifiedUser) {
-          console.log(`Successfully verified user: ${verifiedUser.email}`);
           return res.status(200).json({
             success: true,
             message: "Email verified successfully! You can now log in.",
@@ -253,11 +228,9 @@ export const verifyEmail = async (req, res) => {
       }
     }
 
-    console.log(`Token not found, checking recently verified users...`);
     const recentUsers = await getRecentlyVerifiedUsers();
 
     if (recentUsers.length > 0) {
-      console.log(`Found ${recentUsers.length} recently verified users`);
       return res.status(200).json({
         success: true,
         message: "This verification link has already been used successfully! You can log in to your account.",
@@ -289,7 +262,6 @@ export const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-    console.log(`Forgot password request for: ${email}`);
     const user = await findUserByEmail(email);
     if (!user) {
       console.warn(`User not found: ${email}`);
@@ -310,11 +282,9 @@ export const forgotPassword = async (req, res) => {
     const resetId = crypto.randomBytes(16).toString("hex");
     const expiresAt = new Date(Date.now() + 3600000); // 1 hour
     await updateResetToken(email, resetId, expiresAt);
-    console.log(`Generated reset token for: ${email}`);
 
     try {
       await sendPasswordResetEmail(email, user.name, resetId);
-      console.log(`Password reset email sent to ${email}`);
     } catch (emailError) {
       console.error("Failed to send password reset email:", emailError);
       return res.status(500).json({
@@ -340,7 +310,6 @@ export const changePassword = async (req, res) => {
   const { currentPassword, newPassword, resetId } = req.body;
 
   try {
-    console.log(`Changing password`, { resetId: !!resetId });
 
     let user;
 
@@ -384,10 +353,8 @@ export const changePassword = async (req, res) => {
 
     if (resetId) {
       await updateResetToken(user.email, null, null);
-      console.log(`Cleared reset token for: ${user.email}`);
     }
 
-    console.log(`Password changed for: ${user.email}`);
     res.status(200).json({ success: true, message: "Password changed successfully." });
   } catch (error) {
     console.error("Change password error:", error.message, error.stack);
@@ -400,9 +367,7 @@ export const changePassword = async (req, res) => {
  */
 export const getUsers = async (req, res) => {
   try {
-    console.log(`Fetching users for: ${req.user.email} (${req.user.role})`);
     const users = await getAllUsers(req.user.role);
-    console.log(`Fetched ${users.length} users`);
     res.status(200).json({ success: true, message: "Users retrieved successfully", users });
   } catch (error) {
     console.error("Get users error:", error.message, error.stack);
@@ -417,7 +382,6 @@ export const changeUserRole = async (req, res) => {
   const { userId, newRole, userEmail } = req.body;
 
   try {
-    console.log(`Role change request: User ${userId} to ${newRole} by ${req.user.email} (${req.user.role})`);
 
     const userToChange =
       (await findUserByEmail(userEmail)) || (await getAllUsers(req.user.role)).find((u) => u.id === userId);
@@ -428,7 +392,6 @@ export const changeUserRole = async (req, res) => {
     }
 
     const oldRole = userToChange.role;
-    console.log(`Changing ${userToChange.name} from ${oldRole} to ${newRole}`);
 
     const updatedUser = await updateUserRole(userId, newRole, req.user.role);
     if (!updatedUser) {
@@ -436,7 +399,6 @@ export const changeUserRole = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    console.log(`Role changed: ${userToChange.name} is now ${newRole}`);
 
     try {
       await sendRoleChangeEmail(
@@ -446,7 +408,6 @@ export const changeUserRole = async (req, res) => {
         newRole,
         req.user.name || "Administrator"
       );
-      console.log(`Role change email sent to ${updatedUser.email}`);
     } catch (emailError) {
       console.error("Failed to send role change email:", emailError);
     }
@@ -469,7 +430,6 @@ export const removeUser = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    console.log(`Delete user request: User ${userId} by ${req.user.email} (${req.user.role})`);
 
     const deletedUser = await deleteUser(Number.parseInt(userId), req.user.role);
 
@@ -478,7 +438,6 @@ export const removeUser = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    console.log(`User deleted: ${deletedUser.name}`);
 
     res.status(200).json({
       success: true,
@@ -538,10 +497,8 @@ export const registerStudent = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log(`Password hashed for: ${email}`);
 
     const verificationToken = crypto.randomBytes(32).toString("hex");
-    console.log(`Generated verification token for ${email}`);
 
     const role = "student";
     const newUser = await createUser(
@@ -554,22 +511,16 @@ export const registerStudent = async (req, res) => {
       null
     );
 
-    console.log(`Student created:`, {
-      id: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-    });
+   
 
     const token = jwt.sign(
       { id: newUser.id, email: newUser.email, role: newUser.role },
       JWT_SECRET,
       { expiresIn: "24h" }
     );
-    console.log(`Generated token for student: ${email}`);
 
     try {
       await sendVerificationEmail(email, name, verificationToken);
-      console.log(`Verification email sent to ${email}`);
     } catch (emailError) {
       console.error("Failed to send verification email:", emailError);
       return res.status(201).json({

@@ -45,7 +45,7 @@ export const extractTextFromFile = async (fileInput, mimeType, options = {}) => 
       const data = await pdf(buffer);
       text = cleanText(data.text);
     }
-    // TXT
+    // TXT  
     else if (mimeType === "text/plain") {
       text = cleanText(buffer.toString("utf-8"));
     }

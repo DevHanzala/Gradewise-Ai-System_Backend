@@ -5,7 +5,6 @@ import {
   storeQuestionBlocks,
   getAssessmentsByInstructor,
   getAssessmentById,
-  // updateAssessment,
   deleteAssessment,
   clearLinksForAssessment,
   storeResourceChunk,
@@ -179,7 +178,7 @@ const createAssessmentHandler = async (req, res) => {
 };
 
 // ROUTES
-router.post('/', protect, authorizeRoles('instructor', 'admin', 'super_admin'), upload.array('new_files'), createAssessmentHandler);
+router.post('/', protect, authorizeRoles('instructor', 'admin', 'super_admin'), upload.array('new_files',3), createAssessmentHandler);
 
 router.get('/', protect, authorizeRoles('instructor', 'admin', 'super_admin'), async (req, res) => {
   const assessments = await getAssessmentsByInstructor(req.user.id);

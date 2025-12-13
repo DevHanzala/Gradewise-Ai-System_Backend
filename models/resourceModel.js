@@ -10,7 +10,6 @@ export const ensureResourcesTable = async () => {
       )
     `);
     if (!tableCheck.rows[0].exists) {
-      console.log("Creating resources table...");
       await pool.query(`
         CREATE TABLE resources (
           id SERIAL PRIMARY KEY,
@@ -22,7 +21,6 @@ export const ensureResourcesTable = async () => {
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )
       `);
-      console.log("resources table created");
     }
   } catch (error) {
     console.error("Error creating resources table:", error);
@@ -40,7 +38,6 @@ export const ensureResourceChunksTable = async () => {
       )
     `);
     if (!tableCheck.rows[0].exists) {
-      console.log("Creating resource_chunks table...");
       await pool.query(`
         CREATE TABLE resource_chunks (
           id SERIAL PRIMARY KEY,
@@ -54,7 +51,6 @@ export const ensureResourceChunksTable = async () => {
       await pool.query(`
         CREATE INDEX idx_resource_chunks_resource_id ON resource_chunks(resource_id);
       `);
-      console.log("resource_chunks table created");
     }
   } catch (error) {
     console.error("Error creating resource_chunks table:", error);
@@ -70,7 +66,6 @@ export const init = async () => {
     }
     await ensureResourcesTable();
     await ensureResourceChunksTable();
-    console.log("All resource-related tables initialized successfully");
   } catch (error) {
     console.error("Error initializing resource tables:", error);
     throw error;
@@ -87,7 +82,6 @@ export const createResource = async (resourceData) => {
   `;
   try {
     const { rows } = await pool.query(query, [name, file_size, content_type, visibility, uploaded_by]);
-    console.log(`Created resource: ID=${rows[0].id}`);
     return rows[0];
   } catch (error) {
     console.error("Error creating resource:", error);
@@ -158,7 +152,6 @@ export const updateResource = async (resourceId, updateData) => {
   try {
     const { rows } = await pool.query(query, [name, visibility, resourceId]);
     if (rows.length === 0) throw new Error("Resource not found");
-    console.log(`Updated resource: ID=${resourceId}`);
     return rows[0];
   } catch (error) {
     console.error("Error updating resource:", error);
@@ -170,7 +163,6 @@ export const deleteResource = async (resourceId) => {
   try {
     const { rows } = await pool.query("DELETE FROM resources WHERE id = $1 RETURNING *", [resourceId]);
     if (rows.length === 0) throw new Error("Resource not found");
-    console.log(`Deleted resource: ID=${resourceId}`);
     return rows[0];
   } catch (error) {
     console.error("Error deleting resource:", error);
@@ -195,7 +187,6 @@ export const linkResourceToAssessment = async (assessmentId, resourceId) => {
       RETURNING *
     `;
     const { rows } = await pool.query(query, [assessmentId, resourceId]);
-    console.log(`Linked resource ${resourceId} to assessment ${assessmentId}`);
     return rows[0];
   } catch (error) {
     console.error("Error linking resource to assessment:", error);
@@ -213,7 +204,6 @@ export const getAssessmentResources = async (assessmentId) => {
       WHERE ar.assessment_id = $1
     `;
     const { rows } = await pool.query(query, [assessmentId]);
-    console.log(`Fetched ${rows.length} resources for assessment ${assessmentId}`);
     return rows;
   } catch (error) {
     console.error("Error fetching assessment resources:", error);
@@ -230,7 +220,6 @@ export const unlinkResourceFromAssessment = async (assessmentId, resourceId) => 
     `;
     const { rows } = await pool.query(query, [assessmentId, resourceId]);
     if (rows.length === 0) return null;
-    console.log(`Unlinked resource ${resourceId} from assessment ${assessmentId}`);
     return rows[0];
   } catch (error) {
     console.error("Error unlinking resource from assessment:", error);

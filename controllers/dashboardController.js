@@ -3,7 +3,6 @@ import pool from "../DB/db.js";
 export const getInstructorOverview = async (req, res) => {
   try {
     const instructor_id = req.user.id;
-    console.log(`🔄 Fetching dashboard overview for instructor ${instructor_id}`);
 
     // Get assessment count
     const assessmentQuery = `
@@ -35,7 +34,6 @@ export const getInstructorOverview = async (req, res) => {
       resources: parseInt(resourceResult.rows[0].resource_count, 10),
     };
 
-    console.log(`✅ Fetched overview: ${JSON.stringify(overview)}`);
     res.status(200).json({
       success: true,
       message: "Overview retrieved successfully",

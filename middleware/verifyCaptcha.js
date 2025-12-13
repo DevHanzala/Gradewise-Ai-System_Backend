@@ -28,17 +28,14 @@ const verifyCaptcha = async (req, res, next) => {
     const { success, score } = response.data;
 
     if (!success || (score && score < 0.5)) {
-      console.log("CAPTCHA failed:", { success, score });
       return res.status(403).json({
         success: false,
         message: "Bot detected. Access denied.",
       });
     }
 
-    console.log("CAPTCHA passed:", { success, score });
     next();
   } catch (error) {
-    console.error("reCAPTCHA verification failed:", error.response?.data || error.message);
     return res.status(500).json({
       success: false,
       message: "CAPTCHA verification failed",
