@@ -308,7 +308,6 @@ export const deleteAssessmentData = async (req, res) => {
 
     await deleteAssessment(parseInt(assessment_id));
 
-    // FINAL CACHE CLEARING — PUT THIS AT THE END OF updateAssessmentData & deleteAssessmentData
     const instructorId = req.user.id;
     const assessmentId = parseInt(req.params.id || req.params.assessmentId);
 

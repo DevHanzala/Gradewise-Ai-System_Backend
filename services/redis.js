@@ -1,6 +1,5 @@
 import { Redis } from '@upstash/redis';
 
-// This connects to your Upstash Redis (100% working with your credentials)
 export const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || 'https://divine-donkey-12019.upstash.io',
   token: process.env.UPSTASH_REDIS_REST_TOKEN || 'AS7zAAIncDFlYTZkOTUwZDA5NjQ0MDQ4YmY2ZjdlZGQ1NDgyZmNjMHAxMTIwMTk',

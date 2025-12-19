@@ -44,7 +44,6 @@ export const protect = async (req, res, next) => {
 
     // Set req.user
     req.user = { id: user.id, email: user.email, role: user.role };
-    console.log(`✅ User authenticated for ${req.method} ${req.originalUrl}: id=${req.user.id}, role=${req.user.role}`);
 
     next();
   } catch (error) {
@@ -66,7 +65,6 @@ export const authorizeRoles = (...roles) => {
       console.warn(`⚠️ Access denied to ${req.method} ${req.originalUrl}: userRole=${req.user?.role || 'none'}, allowed=[${allowedRoles.join(', ')}]`);
       return res.status(403).json({ success: false, message: "Access denied: Insufficient permissions" });
     }
-
     next();
   };
 };

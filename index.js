@@ -75,11 +75,7 @@ const startServer = async () => {
     global.startupLogs.push(`[SERVER] Listening on 0.0.0.0:${PORT}...`);
 
     httpServer.listen(PORT, "0.0.0.0", () => {
-      global.startupLogs.push(`[LIVE] Server is LIVE at https://gradeadmin.techmiresolutions.com`);
-      console.log(`Server running on port ${PORT}`);
-      console.log(`Environment: ${process.env.NODE_ENV || "production"}`);
-      console.log(`Frontend URL: ${process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com"}`);
-      console.log(`Health: https://gradeadmin.techmiresolutions.com/api/health`);
+      global.startupLogs.push(`[LIVE] Server is LIVE at https://gradewiseai.techmiresolutions.com`);
     });
   } catch (error) {
     const msg = `[FATAL] STARTUP FAILED: ${error.message}`;
@@ -101,26 +97,11 @@ app.use(
     credentials: true,
   })
 );
-
-// === BODY PARSER (Exclude assessment uploads) ===
-app.use((req, res, next) => {
-  if (req.originalUrl.startsWith("/api/assessments")) {
-    return next(); // Multer will handle body
-  }
-  express.json({ limit: "10mb" })(req, res, next);
-});
-
-app.use((req, res, next) => {
-  if (req.originalUrl.startsWith("/api/assessments")) {
-    return next();
-  }
-  express.urlencoded({ extended: true, limit: "10mb" })(req, res, next);
-});
-
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Request logging
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.originalUrl} - ${new Date().toISOString()}`);
   next();
 });
 
@@ -150,7 +131,7 @@ app.get("/api/logs", (req, res) => {
     success: true,
     data: {
       timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || "production",
+      environment: process.env.NODE_ENV || "development",
       port: PORT,
       frontendUrl: process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com",
       geminiKeyLoaded: !!process.env.GEMINI_CREATION_API_KEY,

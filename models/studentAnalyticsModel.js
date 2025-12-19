@@ -11,9 +11,9 @@ import { getCreationModel, generateContent } from "../services/geminiService.js"
  * @param {number} studentId - Student ID
  * @returns {Object} Student analytics data
  */
+//No AI
 export const getStudentAnalytics = async (studentId) => {
   try {
-
     const enrolledAssessments = await db.query(`
       SELECT 
         a.id,
@@ -194,6 +194,7 @@ export const getStudentAnalytics = async (studentId) => {
  * @param {string} timeRange - 'week', 'month', or 'year'
  * @returns {Array} Performance data points
  */
+//No AI
 export const getPerformanceOverTime = async (studentId, timeRange) => {
   try {
     let dateFilter = "";
@@ -251,6 +252,7 @@ export const getPerformanceOverTime = async (studentId, timeRange) => {
  * @param {number} studentId - Student ID
  * @returns {Array} List of assessments
  */
+//No AI
 export const getStudentAssessmentsList = async (studentId) => {
   try {
     const query = `
@@ -294,6 +296,13 @@ export const getStudentAssessmentsList = async (studentId) => {
  * @param {number} assessmentId - Assessment ID
  * @returns {Object} Assessment analytics
  */
+/**
+ */
+/**
+ * Get analytics for a specific assessment — NO AI RECOMMENDATIONS HERE
+ */
+// UPDATE IN studentAnalyticsModel.js — COMPLETE FUNCTION (NO AI HERE)
+//No AI
 export const getAssessmentAnalytics = async (studentId, assessmentId) => {
   try {
     const attempt = await db.query(`
@@ -330,12 +339,37 @@ export const getAssessmentAnalytics = async (studentId, assessmentId) => {
 
     const { attempt_id, time_taken, assessment_title, assessment_created_at, student_score, total_marks, percentage } = attempt.rows[0];
 
+    // FIXED QUERY — HANDLES SHORT ANSWER JSONB + OTHER TYPES
     const questionStats = await db.query(`
       SELECT 
         COUNT(DISTINCT gq.id) as total_questions,
-        SUM(CASE WHEN LOWER(TRIM(REPLACE(sa.student_answer, '"', ''))) = LOWER(TRIM(REPLACE(gq.correct_answer, '"', ''))) THEN 1 ELSE 0 END) as correct_answers,
-        COUNT(DISTINCT gq.id) - SUM(CASE WHEN LOWER(TRIM(REPLACE(sa.student_answer, '"', ''))) = LOWER(TRIM(REPLACE(gq.correct_answer, '"', ''))) THEN 1 ELSE 0 END) as incorrect_answers,
-        SUM(CASE WHEN LOWER(TRIM(REPLACE(sa.student_answer, '"', ''))) != LOWER(TRIM(REPLACE(gq.correct_answer, '"', ''))) THEN COALESCE(gq.negative_marks, 0) ELSE 0 END) as negative_marks_applied
+        SUM(CASE 
+          WHEN sa.student_answer IS NULL THEN 0
+          WHEN gq.question_type = 'short_answer' THEN
+            CASE WHEN sa.score > 0 THEN 1 ELSE 0 END
+          ELSE
+            CASE WHEN TRIM(LOWER(REGEXP_REPLACE(sa.student_answer, '[^a-zA-Z0-9]', '', 'g'))) = 
+                     TRIM(LOWER(REGEXP_REPLACE((gq.correct_answer)::text, '[^a-zA-Z0-9]', '', 'g'))) 
+            THEN 1 ELSE 0 END
+        END) as correct_answers,
+        SUM(CASE 
+          WHEN sa.student_answer IS NULL THEN 0
+          WHEN gq.question_type = 'short_answer' THEN
+            CASE WHEN sa.score <= 0 AND sa.student_answer IS NOT NULL THEN 1 ELSE 0 END
+          ELSE
+            CASE WHEN TRIM(LOWER(REGEXP_REPLACE(sa.student_answer, '[^a-zA-Z0-9]', '', 'g'))) != 
+                     TRIM(LOWER(REGEXP_REPLACE((gq.correct_answer)::text, '[^a-zA-Z0-9]', '', 'g'))) 
+            THEN 1 ELSE 0 END
+        END) as incorrect_answers,
+        SUM(CASE 
+          WHEN sa.student_answer IS NULL THEN 0
+          WHEN gq.question_type = 'short_answer' THEN
+            CASE WHEN sa.score < 0 THEN ABS(sa.score) ELSE 0 END
+          ELSE
+            CASE WHEN TRIM(LOWER(REGEXP_REPLACE(sa.student_answer, '[^a-zA-Z0-9]', '', 'g'))) != 
+                     TRIM(LOWER(REGEXP_REPLACE((gq.correct_answer)::text, '[^a-zA-Z0-9]', '', 'g'))) 
+            THEN COALESCE(gq.negative_marks, 0) ELSE 0 END
+        END) as negative_marks_applied
       FROM generated_questions gq
       LEFT JOIN student_answers sa ON sa.question_id = gq.id AND sa.attempt_id = $1
       WHERE gq.attempt_id = $1
@@ -355,37 +389,11 @@ export const getAssessmentAnalytics = async (studentId, assessmentId) => {
       ORDER BY performance ASC
     `, [attempt_id]);
 
-    const client = await getCreationModel();
-    const prompt = `You are an educational AI assistant. Generate learning recommendations for the assessment "${assessment_title}" with score ${percentage || 0}%. Weak questions: ${JSON.stringify(weak_questions.rows)}. If no weak questions, provide general recommendations for improvement. Respond ONLY with valid JSON: { "weak_areas": [{ "topic": "descriptive topic", "performance": number, "suggestion": "detailed suggestion" }], "study_plan": { "daily_practice": [{ "topic": "string", "focus": "string", "time_allocation": "string" }], "weekly_review": [{ "topic": "string", "activity": "string", "goal": "string" }] } }. Ensure JSON is parseable.`;
-    let responseText = await generateContent(client, prompt, {
-      generationConfig: { maxOutputTokens: 1000, temperature: 0.7, response_mime_type: 'application/json' },
-      thinkingConfig: { thinkingBudget: 0 },
-    });
-
-    responseText = responseText.replace(/^```json\n/, '').replace(/\n```$/, '').trim();
-
-    let recommendations = {
-      weak_areas: [],
-      study_plan: { daily_practice: [], weekly_review: [] }
-    };
-
-    try {
-      recommendations = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error("❌ AI recommendation parsing error:", parseError);
-      recommendations = {
-        weak_areas: weak_questions.rows.map(area => ({
-          topic: area.question_type || 'General',
-          performance: Math.round((area.performance || 0) * 100),
-          suggestion: getSuggestionForArea(area.question_type, 'medium')
-        })),
-        study_plan: generateStudyPlan(weak_questions.rows.map(area => ({
-          topic: area.question_type || 'General',
-          performance: Math.round((area.performance || 0) * 100),
-          suggestion: getSuggestionForArea(area.question_type, 'medium')
-        })))
-      };
-    }
+    const studentAnswers = await db.query(`
+      SELECT score
+      FROM student_answers
+      WHERE attempt_id = $1
+    `, [attempt_id]);
 
     return {
       assessment_title,
@@ -398,8 +406,10 @@ export const getAssessmentAnalytics = async (studentId, assessmentId) => {
       negative_marks_applied: questionStats.rows[0].negative_marks_applied || 0,
       total_marks: total_marks,
       student_score: student_score,
-      weak_areas: recommendations.weak_areas,
-      recommendations: recommendations
+      student_answers: studentAnswers.rows,
+      weak_questions: weak_questions.rows,
+      weak_areas: [],
+      recommendations: { weak_areas: [], study_plan: { daily_practice: [], weekly_review: [] } }
     };
   } catch (error) {
     console.error("❌ Error getting assessment analytics:", error);
@@ -585,9 +595,9 @@ const getRecommendedAssessments = async (studentId) => {
  * @param {number} assessmentId - Assessment ID
  * @returns {Array} List of questions with answers and scores
  */
+//No AI
 export const getAssessmentQuestions = async (studentId, assessmentId) => {
   try {
-    // First get the latest completed attempt
     const attemptQuery = `
       SELECT id as attempt_id
       FROM assessment_attempts
@@ -601,7 +611,6 @@ export const getAssessmentQuestions = async (studentId, assessmentId) => {
     }
     const attemptId = attemptRes.rows[0].attempt_id;
 
-    // Now get questions
     const questionsQuery = `
       SELECT 
         gq.id,
@@ -623,10 +632,17 @@ export const getAssessmentQuestions = async (studentId, assessmentId) => {
     const questionsRes = await db.query(questionsQuery, [attemptId]);
 
     return questionsRes.rows.map(q => {
-      // Normalize and compare answers
+      // FIX: Handle correct_answer as JSONB for short_answer
+      let correctAnswerStr = '';
+      if (q.question_type === 'short_answer' && typeof q.correct_answer === 'object' && q.correct_answer !== null) {
+        // Extract keywords or main answer from JSONB
+        correctAnswerStr = Object.values(q.correct_answer).flat().join(' ').trim().replace(/"/g, '').toLowerCase();
+      } else {
+        correctAnswerStr = (q.correct_answer || '').toString().trim().replace(/"/g, '').toLowerCase();
+      }
+
       const normalizedStudentAnswer = (q.student_answer || '').trim().replace(/"/g, '').toLowerCase();
-      const normalizedCorrectAnswer = (q.correct_answer || '').trim().replace(/"/g, '').toLowerCase();
-      const computedIsCorrect = normalizedStudentAnswer === normalizedCorrectAnswer;
+      const computedIsCorrect = normalizedStudentAnswer === correctAnswerStr;
       const computedScore = computedIsCorrect ? q.positive_marks : (q.negative_marks || 0);
 
       return {
@@ -636,7 +652,7 @@ export const getAssessmentQuestions = async (studentId, assessmentId) => {
         type: q.question_type,
         options: q.options,
         max_marks: q.positive_marks,
-        correct_answer: q.correct_answer,
+        correct_answer: q.correct_answer, // Keep original (object or string)
         student_answer: q.student_answer,
         score: computedScore,
         is_correct: computedIsCorrect,

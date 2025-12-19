@@ -50,5 +50,3 @@ export const getStudentAssessmentsList = async (req, res) => {
   }
 }
 
-
-

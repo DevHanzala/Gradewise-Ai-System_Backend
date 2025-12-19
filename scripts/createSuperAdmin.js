@@ -42,6 +42,12 @@ const createSuperAdmin = async () => {
     const { rows: existing } = await client.query(existingQuery);
 
     if (existing.length > 0) {
+      console.log("Existing Super Admin:", {
+        id: existing[0].id,
+        name: existing[0].name,
+        email: existing[0].email,
+        role: existing[0].role,
+      });
       await client.query("ROLLBACK");
       client.release();
       process.exit(1);
@@ -55,7 +61,6 @@ const createSuperAdmin = async () => {
       role: "super_admin",
     };
 
-    console.log("🔄 Creating Super Admin with email:", superAdminData.email);
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(superAdminData.password, 10);
@@ -76,13 +81,11 @@ const createSuperAdmin = async () => {
 
     // Commit the transaction
     await client.query("COMMIT");
-
     const newSuperAdmin = rows[0];
 
-    console.log("✅ Super Admin created successfully!");
-   
+    
 
-
+    
     client.release();
     process.exit(0);
   } catch (error) {

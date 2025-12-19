@@ -40,7 +40,7 @@ export const sendVerificationEmail = async (email, name, verificationToken) => {
   const baseUrl = process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com";
   const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
 
-  const subject = "Verify Your Email - Gradewise AI";
+  const subject = "Verify Your Email - Gradwise AI";
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -60,11 +60,11 @@ export const sendVerificationEmail = async (email, name, verificationToken) => {
     <body>
       <div class="container">
         <div class="header">
-          <h1>Welcome to Gradewise AI!</h1>
+          <h1>Welcome to Gradwise AI!</h1>
         </div>
         <div class="content">
           <h2>Hi ${name},</h2>
-          <p>Thank you for signing up for Gradewise AI! To complete your registration, please verify your email address by clicking the button below:</p>
+          <p>Thank you for signing up for Gradwise AI! To complete your registration, please verify your email address by clicking the button below:</p>
           
           <div style="text-align: center;">
             <a href="${verificationUrl}" class="button">Verify Email Address</a>
@@ -75,19 +75,22 @@ export const sendVerificationEmail = async (email, name, verificationToken) => {
           
           <p><strong>This verification link will expire in 24 hours.</strong></p>
           
-          <p>If you didn't create an account with Gradewise AI, you can safely ignore this email.</p>
+          <p>If you didn't create an account with Gradwise AI, you can safely ignore this email.</p>
           
-          <p>Best regards,<br>The Gradewise AI Team</p>
+          <p>Best regards,<br>The Gradwise AI Team</p>
         </div>
         <div class="footer">
-          <p>© 2025 Gradewise AI. All rights reserved.</p>
+          <p>© 2025 Gradwise AI. All rights reserved.</p>
         </div>
       </div>
     </body>
     </html>
   `;
 
-  return await sendEmail(email, subject, htmlContent);
+  // Fire and forget — no await to prevent hanging
+  sendEmail(email, subject, htmlContent).catch((error) => {
+    console.error(`Background verification email failed for ${email}:`, error.message);
+  });
 };
 
 /**
@@ -97,7 +100,7 @@ export const sendPasswordResetEmail = async (email, name, resetToken) => {
   const baseUrl = process.env.FRONTEND_URL || "https://gradewiseai.techmiresolutions.com";
   const resetUrl = `${baseUrl}/reset-password/${resetToken}`;
 
-  const subject = "Reset Your Password - Gradewise AI";
+  const subject = "Reset Your Password - Gradwise AI";
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -122,7 +125,7 @@ export const sendPasswordResetEmail = async (email, name, resetToken) => {
         </div>
         <div class="content">
           <h2>Hi ${name},</h2>
-          <p>We received a request to reset your password for your Gradewise AI account. Click the button below to set a new password:</p>
+          <p>We received a request to reset your password for your Gradwise AI account. Click the button below to set a new password:</p>
           
           <div style="text-align: center;">
             <a href="${resetUrl}" class="button">Set New Password</a>
@@ -147,19 +150,23 @@ export const sendPasswordResetEmail = async (email, name, resetToken) => {
             <li>Numbers and special characters</li>
           </ul>
           
-          <p>If you need further assistance, contact support@gradewise.ai.</p>
+          <p>If you need further assistance, contact support@gradwise.ai.</p>
           
-          <p>Best regards,<br>The Gradewise AI Team</p>
+          <p>Best regards,<br>The Gradwise AI Team</p>
         </div>
         <div class="footer">
-          <p>© 2025 Gradewise AI. All rights reserved.</p>
+          <p>© 2025 Gradwise AI. All rights reserved.</p>
         </div>
       </div>
     </body>
     </html>
   `;
 
-  return await sendEmail(email, subject, htmlContent);
+  // Fire and forget — no await to prevent hanging
+  sendEmail(email, subject, htmlContent).catch((error) => {
+    console.error(`Background reset email failed for ${email}:`, error.message);
+  });
+
 };
 
 /**

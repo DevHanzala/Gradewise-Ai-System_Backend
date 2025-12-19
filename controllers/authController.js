@@ -42,7 +42,7 @@ export const signup = async (req, res) => {
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
     const newUser = await createUser(name, email, hashedPassword, "student", verificationToken, "manual", null);
-    
+   
 
     try {
       await sendVerificationEmail(email, name, verificationToken);
@@ -110,6 +110,7 @@ export const googleAuth = async (req, res) => {
       }
 
       user = await createGoogleUser(name, email, uid, "student");
+  
     }
 
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "24h" });
@@ -196,7 +197,6 @@ export const verifyEmail = async (req, res) => {
 
     if (user) {
       if (user.verified) {
-        console.log(`User already verified: ${user.email}`);
         return res.status(200).json({
           success: true,
           message: "Your email is already verified! You can log in to your account.",
@@ -457,11 +457,7 @@ export const registerStudent = async (req, res) => {
   const { name, email, password, roles } = req.body;
 
   try {
-    console.log(`Registering student by ${req.user.email} (${req.user.role}):`, {
-      name,
-      email,
-      captcha: "SKIPPED (admin/instructor internal action)"
-    });
+   
 
     if (roles !== undefined) {
       console.error(`Invalid field 'roles' detected: ${JSON.stringify(roles)}`);

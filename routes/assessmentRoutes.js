@@ -27,7 +27,6 @@ const upload = multer({
   storage: multer.memoryStorage(),
   fileFilter: (req, file, cb) => {
     const allowed = [
-      // Documents
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -178,7 +177,7 @@ const createAssessmentHandler = async (req, res) => {
 };
 
 // ROUTES
-router.post('/', protect, authorizeRoles('instructor', 'admin', 'super_admin'), upload.array('new_files',3), createAssessmentHandler);
+router.post('/', protect, authorizeRoles('instructor', 'admin', 'super_admin'), upload.array('new_files'), createAssessmentHandler);
 
 router.get('/', protect, authorizeRoles('instructor', 'admin', 'super_admin'), async (req, res) => {
   const assessments = await getAssessmentsByInstructor(req.user.id);

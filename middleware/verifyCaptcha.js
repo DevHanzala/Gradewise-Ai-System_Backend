@@ -36,6 +36,7 @@ const verifyCaptcha = async (req, res, next) => {
 
     next();
   } catch (error) {
+    console.error("reCAPTCHA verification failed:", error.response?.data || error.message);
     return res.status(500).json({
       success: false,
       message: "CAPTCHA verification failed",
