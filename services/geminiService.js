@@ -1,41 +1,76 @@
 import { GoogleGenAI } from "@google/genai";
 
-let creationClient = null;
+/* =========================
+   CREATION KEYS (MULTI-PROJECT)
+========================= */
+
+const CREATION_KEYS = [
+  process.env.GEMINI_CREATION_API_KEY_1,
+  process.env.GEMINI_CREATION_API_KEY_2,
+].filter(Boolean);
+
+if (CREATION_KEYS.length === 0) {
+  throw new Error("❌ No GEMINI_CREATION_API_KEYs found in .env");
+}
+
+let creationClients = [];
+let activeCreationIndex = 0;
+
+/* =========================
+   CHECKING KEY (SINGLE)
+========================= */
+
 let checkingClient = null;
 
+/* =========================
+   INITIALIZE CREATION CLIENTS
+========================= */
+
+function initCreationClients() {
+  if (creationClients.length === 0) {
+    creationClients = CREATION_KEYS.map(
+      (key) => new GoogleGenAI({ apiKey: key })
+    );
+    console.log(`✅ Initialized ${creationClients.length} Gemini creation clients`);
+  }
+}
+
+/* =========================
+   GET ACTIVE CREATION CLIENT
+========================= */
+
 export const getCreationModel = async () => {
-  const creationKey = process.env.GEMINI_CREATION_API_KEY;
-  if (!creationClient) {
-    if (!creationKey) {
-      throw new Error("Missing GEMINI_CREATION_API_KEY");
-    }
-    creationClient = new GoogleGenAI({ apiKey: creationKey });
-  }
-  try {
-    return creationClient;
-  } catch (error) {
-    console.error(`❌ Failed to initialize creation client: ${error.message}`);
-    throw error;
-  }
+  initCreationClients();
+  return creationClients[activeCreationIndex];
 };
+
+/* =========================
+   ROTATE KEY ON QUOTA EXCEEDED
+========================= */
+
+function rotateCreationKey() {
+  activeCreationIndex = (activeCreationIndex + 1) % creationClients.length;
+  console.warn(`🔄 Switched Gemini creation key → index ${activeCreationIndex}`);
+}
+
+/* =========================
+   CHECKING MODEL
+========================= */
 
 export const getCheckingModel = async () => {
-  const checkingKey = process.env.GEMINI_CHECKING_API_KEY;
   if (!checkingClient) {
-    if (!checkingKey) {
-      throw new Error("Missing GEMINI_CHECKING_API_KEY");
-    }
-    checkingClient = new GoogleGenAI({ apiKey: checkingKey });
+    const key = process.env.GEMINI_CHECKING_API_KEY;
+    if (!key) throw new Error("❌ Missing GEMINI_CHECKING_API_KEY");
+    checkingClient = new GoogleGenAI({ apiKey: key });
+    console.log("✅ Initialized Gemini checking client");
   }
-  try {
-    return checkingClient;
-  } catch (error) {
-    console.error(`❌ Failed to initialize checking client: ${error.message}`);
-    throw error;
-  }
+  return checkingClient;
 };
 
-// Utility to map UI language codes to Gemini prompt hints
+/* =========================
+   LANGUAGE MAP
+========================= */
+
 export const mapLanguageCode = (lang) => {
   const map = {
     en: "English",
@@ -46,40 +81,43 @@ export const mapLanguageCode = (lang) => {
   return map[lang] || "English";
 };
 
-// Helper function to generate content
+/* =========================
+   SAFE CONTENT GENERATOR
+========================= */
+
 export const generateContent = async (client, prompt, options = {}) => {
   try {
     const response = await client.models.generateContent({
-      model: "gemini-2.5-flash", // Explicitly set to your working model
+      model: options.model || "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: {
-        generationConfig: {
-          maxOutputTokens: options.maxOutputTokens || 4000,
-          temperature: options.temperature || 0.7,
-          ...options.generationConfig,
-        },
-        thinkingConfig: options.thinkingConfig || { thinkingBudget: 0 }, // Default to disable thinking
-        ...options,
+      generationConfig: {
+        maxOutputTokens: options.maxOutputTokens || 1200,
+        temperature: options.temperature ?? 0.7,
+        topP: options.topP ?? 0.9,
       },
+      thinkingConfig: options.thinkingConfig || { thinkingBudget: 0 },
     });
-    const text = response.text || 
-                 (response.candidates && response.candidates[0]?.content?.parts?.[0]?.text) || 
-                 (response.candidates && response.candidates[0]?.output) || 
-                 "No text available";
-    if (!text || text === "No text available") {
-      throw new Error("No valid text content in response");
-    }
+
+    const text =
+      response.text ||
+      response?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!text) throw new Error("Empty Gemini response");
+
     return text;
   } catch (error) {
-    console.error(`❌ Failed to generate content: ${error.message}`);
-    if (error.message.includes("RESOURCE_EXHAUSTED")) {
-      await new Promise(resolve => setTimeout(resolve, 60000));
-      return generateContent(client, prompt, options); // Retry
+    /* === QUOTA HANDLING === */
+    if (
+      error.message.includes("RESOURCE_EXHAUSTED") ||
+      error.message.includes("429")
+    ) {
+      console.warn("⚠️ Gemini quota exceeded, rotating key...");
+      rotateCreationKey();
+
+      const fallbackClient = await getCreationModel();
+      return generateContent(fallbackClient, prompt, options);
     }
-    if (error.message.includes("NOT_FOUND") || error.message.includes("INVALID_ARGUMENT")) {
-      const fallbackClient = new GoogleGenAI({ apiKey: process.env.GEMINI_CREATION_API_KEY });
-      return generateContent(fallbackClient, prompt, { model: "gemini-2.5-pro", ...options });
-    }
+
     throw error;
   }
 };

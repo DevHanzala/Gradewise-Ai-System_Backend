@@ -20,6 +20,7 @@ export const getStudentOverview = async (req, res) => {
       });
     }
 
+    console.log(`📊 Getting analytics overview for student ${studentId}`);
 
     const analytics = await getStudentAnalytics(studentId);
 
@@ -50,6 +51,7 @@ export const getStudentPerformance = async (req, res) => {
       });
     }
 
+    console.log(`📈 Getting performance data for student ${studentId} (${timeRange})`);
 
     const performance = await getPerformanceOverTime(studentId, timeRange);
 
@@ -117,6 +119,7 @@ export const getStudentAssessments = async (req, res) => {
     // CHECK REDIS FIRST — INSTANT LOAD
     const cached = await redis.get(cacheKey);
     if (cached) {
+      console.log(`Student assessments from Redis for student ${studentId}`);
       return res.status(200).json({
         success: true,
         message: "Student assessments retrieved successfully",
@@ -124,6 +127,7 @@ export const getStudentAssessments = async (req, res) => {
       });
     }
 
+    console.log(`Fetching assessments from DB for student ${studentId}`);
     const assessments = await getStudentAssessmentsList(studentId);
 
     // CACHE FOR 10 MINUTES
@@ -220,6 +224,7 @@ export const getStudentReport = async (req, res) => {
       });
     }
 
+    console.log(`📋 Generating detailed report for student ${studentId}${assessmentId ? ` (assessment ${assessmentId})` : ''}`);
 
     let report;
     if (assessmentId) {
@@ -274,9 +279,15 @@ export const getStudentReport = async (req, res) => {
   negative_marks_applied: details.negative_marks_applied || 0, // make sure this is here
   student_answers: details.student_answers || [], // ADD THIS LINE
   recommendations,
-  title: details.assessment_title
+assessment_title: details.assessment_title
 };
 
+console.log("=== REPORT DEBUG ===");
+console.log("details from getAssessmentAnalytics:", details);
+console.log("negative_marks_applied from details:", details.negative_marks_applied);
+console.log("Final report sent:", report);
+console.log("negative_marks_applied in report:", report.negative_marks_applied);
+console.log("=== END DEBUG ===");
 
     } else {
       // General report (no changes)

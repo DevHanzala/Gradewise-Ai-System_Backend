@@ -34,6 +34,7 @@ export const startAssessmentForStudent = async (req, res) => {
     const { assessmentId } = req.params;
     const { language = "en" } = req.body || {};
 
+    console.log(`📝 Starting assessment ${assessmentId} for student ${studentId} in language ${language}`);
 
     // Check if assessment exists
     const { rows: assessRows } = await db.query(
@@ -63,14 +64,18 @@ export const startAssessmentForStudent = async (req, res) => {
     const typeCountsStr = blockRows.map(b => `${b.question_count} ${b.question_type}`).join(", ");
     const totalDuration = blockRows.reduce((sum, b) => sum + b.question_count * (b.duration_per_question || 120), 0);
 
+    console.log(`📊 Using instructor-defined questions: ${typeCountsStr} (total ${numQuestions}, duration ${totalDuration} seconds)`);
 
     // Set is_executed to true if not already
     if (!assessment.is_executed) {
+      console.log(`🔄 Updating is_executed to true for assessment ${assessmentId}`);
       await db.query(
         `UPDATE assessments SET is_executed = true, updated_at = NOW() WHERE id = $1`,
         [assessmentId]
       );
-    } 
+    } else {
+      console.log(`ℹ️ Assessment ${assessmentId} already has is_executed = true`);
+    }
 
     // Validate enrollment
     const { rows: enrollRows } = await db.query(
@@ -99,6 +104,7 @@ export const startAssessmentForStudent = async (req, res) => {
       [studentId, assessmentId, language]
     );
     const attemptId = attemptRows[0].id;
+    console.log(`✅ Created attempt ${attemptId} for assessment ${assessmentId}`);
 
     // Generate questions using the assessmentModel
     await generateAssessmentQuestions(assessmentId, attemptId, language, assessment);
@@ -131,6 +137,7 @@ export const submitAssessmentForStudent = async (req, res) => {
     const { assessmentId } = req.params;
     const { attemptId, answers, language } = req.body;
 
+    console.log(`Submitting assessment ${assessmentId} for student ${studentId}, attempt ${attemptId}`);
 
     // Validate attempt
     const { rows: attemptRows } = await db.query(
@@ -193,12 +200,19 @@ export const submitAssessmentForStudent = async (req, res) => {
       });
 
       // Save to DB
-      await db.query(
+           await db.query(
         `INSERT INTO student_answers (attempt_id, question_id, student_answer, score)
          VALUES ($1, $2, $3, $4)
          ON CONFLICT (attempt_id, question_id) DO UPDATE
          SET student_answer = $3, score = $4`,
-        [attemptId, q.id, studentAnswer !== null ? JSON.stringify(studentAnswer) : null, score]
+        [
+          attemptId, 
+          q.id, 
+          studentAnswer !== null 
+            ? (q.question_type === "short_answer" ? JSON.stringify(studentAnswer) : studentAnswer) 
+            : null, 
+          score
+        ]
       );
     }
 
@@ -212,6 +226,7 @@ await db.query(
    WHERE id = $2`,
   [totalScore, attemptId]
 );
+    console.log(`Assessment submitted successfully. Final score: ${totalScore}`);
 
     res.status(200).json({
       success: true,
@@ -230,6 +245,7 @@ export const getSubmissionDetailsForStudent = async (req, res) => {
     const studentId = req.user.id;
     const { submissionId } = req.params;
 
+    console.log(`📋 Fetching submission ${submissionId} for student ${studentId}`);
 
     const { rows: attemptRows } = await db.query(
       `SELECT aa.*, a.title AS assessment_title
@@ -271,6 +287,7 @@ export const getAssessmentForInstructorPrint = async (req, res) => {
     const { assessmentId } = req.params;
     const userId = req.user.id;
 
+    console.log(`Generating data for physical paper: assessment ${assessmentId}, instructor ${userId}`);
 
     // Fetch assessment + question blocks
     const { rows: assessmentRows } = await db.query(
