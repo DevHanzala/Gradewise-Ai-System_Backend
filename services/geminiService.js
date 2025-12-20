@@ -31,7 +31,6 @@ function initCreationClients() {
     creationClients = CREATION_KEYS.map(
       (key) => new GoogleGenAI({ apiKey: key })
     );
-    console.log(`✅ Initialized ${creationClients.length} Gemini creation clients`);
   }
 }
 
@@ -62,7 +61,6 @@ export const getCheckingModel = async () => {
     const key = process.env.GEMINI_CHECKING_API_KEY;
     if (!key) throw new Error("❌ Missing GEMINI_CHECKING_API_KEY");
     checkingClient = new GoogleGenAI({ apiKey: key });
-    console.log("✅ Initialized Gemini checking client");
   }
   return checkingClient;
 };
